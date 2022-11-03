@@ -1,0 +1,427 @@
+<link rel="stylesheet" href="/manncmd/css/manncmd.css">
+<script src="/manncmd/js/manncmd.js"></script>
+
+<div x-data="alpineManncmd()" x-init="initPage()">
+    <div x-ref="headerAccess">
+        <h2 x-text="name"></h2>
+        <p x-text="description"></p>
+    </div>
+
+        <div>
+        <form>
+            <div id="select-agent" class="field has-addons">
+                <label class="label">Select an agent &nbsp;&nbsp;&nbsp;</label>
+                <div class="control is-expanded">
+                    <div class="select is-small is-fullwidth">
+                        <select x-on:change="selectAgent();freshresults()" x-model="selectedAgentPaw">
+                            <option value="" disabled selected>Select an agent</option>
+                            <template x-for="agent of agents" :key="agent.paw">
+                                <option x-bind:value="agent.paw" x-text="`${agent.host} - ${agent.paw}`"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="has-text-centered content" >
+        <textarea x-model="manualCommand"
+                                                      class="input executor-command"
+                                                      id="input-command"
+                                                      type="text"
+                                                      spellcheck="false"
+                                                      contenteditable
+                                                      required>
+                                                    </textarea>
+    </div>
+    <hr>
+    <div>
+        <button class="button is-primary is-small" @click="sampleFunction();execute()">Click Me</button>
+        <p x-text="sampleVariable"></p>
+    </div>
+    <hr>
+    <div x-show="selectedAgentPaw && links.length">
+        <table class="table is-striped is-fullwidth">
+            <thead>
+                <tr>
+                    <th>order</th>
+                    <th>name</th>
+                    <th>status</th>
+                    <th>command</th>
+                    <th>result</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="(link, index) of links" :key="link.unique">
+                    <tr class="pointer">
+                        <td x-text="index + 1"></td>
+                        <td x-text="link.ability.name"></td>
+<!--                        <td x-text="link.ability.tactic"></td>-->
+                        <td x-text="getLinkStatus(link)" x-bind:class="{ 'has-text-danger': getLinkStatus(link) === 'failed', 'has-text-success': getLinkStatus(link) === 'success' }"></td>
+                        <td x-text="outputCommand[index]"></td>
+                        <td x-text="outputResult[index]"></td>
+                        <td>
+                            <button class="button is-small is-primary" @click="showOutput(link,index)">Output</button>
+                        </td>
+
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+
+
+
+    </div>
+    <hr>
+    <div class="field" id="main" style="width:100%;">
+
+        <div class="control" id="left" style="width:20%;display:inline-block;">
+
+            <div class="select is-small is-fullwidth">
+                <select x-model="selected_CVE_platform" x-on:change="getinfo_CVE()">
+                    <option value="">Please select platform</option>
+                    <template x-for="cve_platform in CVE_platforms">
+                        <option x-bind:value="cve_platform" x-text="cve_platform" x-bind:selected="cve_platform === selected_CVE_platform"></option>
+                    </template>
+                </select>
+            </div>
+        </div>x
+
+        <div class="control" id="mid2" style="width:30%;display:inline-block;">
+
+            <div class="select is-small is-fullwidth">
+                <select x-model="selected_cve" x-on:change="set_supported_flag()">
+                    <option value="">Please select CVE</option>
+                    <template x-for="cve in CVEs">
+                        <option x-bind:value="cve" x-text="cve" x-bind:selected="cve === selected_cve"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+
+        <div class="control" id="right" style="width:15%;display:inline-block;">
+
+            <div class="select is-small is-fullwidth">
+                <select x-model="selected_flag" >
+                    <option value="">Please select operation</option>
+                    <template x-for="flag in flags">
+                        <option x-bind:value="flag" x-text="flag" x-bind:selected="flag === selected_flag"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <button class="button is-small is-primary" @click="ExportReport()">ExportReport</button>
+
+    <button class="button is-small is-primary" @click="test_deploy()">test deploy</button>
+
+    <div x-show="confirm_cve" >
+        <hr>
+        <p id = "test">
+        </p>
+        <hr>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+<script>
+/*
+  Templates in CALDERA are now enhanced with Alpine.js! It's essentially
+  a replacement for jQuery that has similar features to Vue and React.
+  Read up on the docs before you get started working on the UI: https://alpinejs.dev/
+*/
+
+function alpineManncmd() {
+    return {
+        agents: [],
+        selectedAgentPaw: '',
+        selectedObfuscator: 'plain-text',
+        manualCommand: '',
+        executor: {"name":"sh","platform":"linux","command":"ls"},
+        facts: [],
+        links: [],
+        outputResult: [],
+        outputCommand: [],
+        operationName: [],
+
+
+
+        kernel_version: '',
+        CVE_platform: '',
+        kernel_list: [],
+        CVEs: [],
+        CVE_platforms: [],
+        selected_CVE_platform: '',
+        selected_kernel_version: '',
+        selected_cve: '',
+        flags: ['description','deploy','detect','exploit','test_exploit','test_detect'],
+        selected_flag: '',
+
+        confirm_cve: '',
+        confirm_exp: '',
+        confirm_detect: '',
+        confirm_deploy: '',
+
+        name: '{{ name }}',
+        description: '{{ description }}',
+        sampleVariable: '',
+
+        initPage() {
+            // Sample API request
+            apiV2('GET', '/api/v2/health').then((response) => {
+                console.log('Woohoo, this page can talk to the API!');
+                return apiV2('GET', '/api/v2/agents');
+            }).then((agents) => {
+                    this.agents = agents;
+                    this.getinfo_platform();
+            }).then(async (refresher) => {
+                    while (this.$refs.headerAccess) {
+                        await sleep(3000);
+                        this.refreshpage();
+                    }
+            }).catch((error) => {
+                toast('Error loading page', false);
+                console.error(error);
+            });
+        },
+
+        selectAgent() {
+                this.selectedAgent = this.agents.find((agent) => agent.paw === this.selectedAgentPaw);
+                //console.log(this.selectedAgentPaw);
+                this.links = this.selectedAgent.links;
+                //this.filterAbilitiesByPlatform();
+        },
+
+        freshresults() {
+                this.operationName = [];
+                this.outputResult = [];
+                this.outputCommand = [];
+        },
+
+        refreshpage() {
+                apiV2('GET', '/api/v2/agents').then((agents) => {
+                    this.agents = agents;
+                    if (this.selectedAgentPaw) {
+                        this.selectAgent();
+                    }
+                }).catch((error) => {
+                    toast('There was an error refreshing the page', false);
+                    console.error(error);
+                });
+            },
+
+        execute() {
+                if (this.facts.length && this.facts.filter((fact) => !fact.value).length) {
+                    toast('Fact values cannot be empty!', false);
+                    return;
+                }
+                this.executor.command = this.manualCommand;
+                let requestBody = {
+                    paw: this.selectedAgentPaw,
+                    facts: this.facts,
+                    executor: this.executor,
+                    obfuscator: this.selectedObfuscator
+                };
+
+                apiV2('POST', '/plugin/manncmd/exploit', requestBody).then((data) => {
+                    //this.showRunModal = false;
+                    this.refreshpage();
+                    toast('Executed ability', true);
+                }).catch((error) => {
+                    console.error(error);
+                })
+            },
+
+        getinfo_platform() {
+                let requestBody = {
+                    CVE_platform: this.selected_CVE_platform,
+                    // kernel_version: this.selected_kernel_version,
+                    // CVEs: this.selected_cve
+                };
+                console.log(this.selected_CVE_platform);
+                apiV2('POST', '/plugin/manncmd/get_info', requestBody).then((data) => {
+                    this.CVE_platforms = data['CVE_platform'];
+                    this.refreshpage();
+                    toast('Get CVE info!', true);
+                }).catch((error) => {
+                    console.error(error);
+                })
+            },
+
+        getinfo_kernel() {
+                let requestBody = {
+                    CVE_platform: this.selected_CVE_platform,
+                    // kernel_version: this.selected_kernel_version,
+                    // CVEs: this.selected_cve
+                };
+                console.log(this.selected_CVE_platform);
+                apiV2('POST', '/plugin/manncmd/get_info', requestBody).then((data) => {
+                    this.kernel_list = data['kernel_version'];
+                    this.refreshpage();
+                    toast('Get CVE info!', true);
+                }).catch((error) => {
+                    console.error(error);
+                })
+            },
+
+        getinfo_CVE() {
+                let requestBody = {
+                    CVE_platform: this.selected_CVE_platform,
+                    kernel_version: this.selected_kernel_version,
+                    // CVEs: this.selected_cve
+                };
+                console.log(this.selected_CVE_platform);
+                console.log(this.selected_kernel_version);
+                apiV2('POST', '/plugin/manncmd/get_info', requestBody).then((data) => {
+                    this.CVEs = data['CVEs'];
+                    this.refreshpage();
+                    toast('Get CVE info!', true);
+                }).catch((error) => {
+                    console.error(error);
+                })
+            },
+
+        set_supported_flag() {
+                let requestBody = {
+                    CVE_platform: this.selected_CVE_platform,
+                    CVEs: this.selected_cve,
+                    SetFlag: true
+                };
+                console.log(this.selected_CVE_platform);
+                console.log(this.selected_cve);
+                apiV2('POST', '/plugin/manncmd/get_info', requestBody).then((data) => {
+                    //this.CVEs = data['CVEs'];
+                    this.flags = data;
+                    this.refreshpage();
+                    toast('Get CVE info!', true);
+                }).catch((error) => {
+                    console.error(error);
+                })
+            },
+
+        ExportReport() {
+                //console.log(this.operationName);
+                let requestBody = {
+                    Agent : this.selectedAgentPaw,
+                    OperationName : this.operationName,
+                    Commands : this.outputCommand,
+                    Result : this.outputResult,
+                };
+                apiV2('POST', '/plugin/manncmd/detect_res', requestBody).then((data) => {
+                    toast('ExportReport Done!', true);
+                    console.log(data);
+                    console.log('222222222222222222');
+                }).catch((error) => {
+                    console.error(error);
+                })
+        },
+
+        test_deploy() {
+                let requestBody = {
+                    paw: this.selectedAgentPaw,
+                    executor: this.executor,
+                    flag: this.selected_flag,
+                    CVE_platform: this.selected_CVE_platform,
+                    kernel_version: this.selected_kernel_version,
+                    CVEs: this.selected_cve,
+                    facts: this.facts,
+                    obfuscator: this.selectedObfuscator,
+                    name: this.selected_flag +'_'+this.selected_cve
+                };
+                apiV2('POST', '/plugin/manncmd/deploy_cve', requestBody).then((data) => {
+                    if(requestBody.flag=='description'){
+                        console.log(data.CVE);
+                        this.confirm_cve = "";
+                        document.getElementById("test").innerHTML ="";
+                        this.confirm_cve = data.CVE;
+                        for(i in data){
+                            document.getElementById("test").innerHTML += i;
+                            document.getElementById("test").innerHTML += "  : ";
+                            document.getElementById("test").innerHTML += data[i];
+                            document.getElementById("test").innerHTML += "<br/>";
+                        }
+                    }
+                    this.refreshpage();
+                    toast('Deploy test!', true);
+                }).catch((error) => {
+                    console.error(error);
+                })
+            },
+
+
+        getLinkStatus(link) {
+                if (link.status === 0) {
+                    return 'success';
+                } else if (link.status > 0) {
+                    return 'failed';
+                } else {
+                    return 'in progress';
+                }
+            },
+
+        showOutput(link,index1) {
+            tempres = this.getLinkStatus(link);
+
+            restRequest('POST', { 'index': 'result', 'link_id': link.unique }, (data) => {
+                    if(tempres=='success'){
+                    if(this.outputResult[index1]==undefined){
+                        this.outputResult[index1]= b64DecodeUnicode(data.output);
+                    }
+                    }
+                    if(tempres=='failed'){
+                        this.outputResult[index1]= "";
+                    }
+                    if(this.outputCommand[index1]==undefined){
+                    //this.outputCommand.push(b64DecodeUnicode(link.command));
+                    this.outputCommand[index1]= b64DecodeUnicode(link.command);
+
+                    }
+
+                });
+                    this.operationName[index1]= link.ability.name;
+                    console.log(this.operationName[index1]);
+                    console.log(index1);
+                    console.log(link);
+            },
+
+        detect_res(dataoutput,index) {
+            let requestBody = {
+                    CVE_platform: this.selected_CVE_platform,
+                    kernel_version: this.selected_kernel_version,
+                    detectoutput: dataoutput,
+                    selected_cve: this.selected_cve,
+                    CVEs: this.selected_cve
+                };
+                console.log(dataoutput);
+                console.log(this.selected_cve);
+                apiV2('POST', '/plugin/manncmd/detect_res', requestBody).then((data) => {
+                    //toast('Test detection result!', true);
+                    this.outputResult[index] = data;
+
+                    console.log(data);
+
+                    console.log('222222222222222222');
+                    return data;
+                }).catch((error) => {
+                    console.error(error);
+                })
+            },
+
+        sampleFunction() {
+            this.sampleVariable = 'You clicked the button and run the command' + this.manualCommand;
+        }
+    };
+}
+
+// # sourceURL=manncmd.js
+</script>

